@@ -59,6 +59,7 @@
   gap: 15px;
   margin-left: 20px;
 }
+
 .cardinfo_box ul li {
   list-style: none;
   width: 20px;
@@ -121,4 +122,39 @@
   outline: none;
   font-size: 1rem;
   padding: 10px;
+}
+
+.cardinfo_status {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.cardinfo_status_toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  cursor: pointer;
+  user-select: none;
+}
+
+.cardinfo_status_toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary-purple);
+}
+
+.cardinfo_status_label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.cardinfo_status_toggle input[type="checkbox"]:checked+.cardinfo_status_label {
+  color: var(--primary-purple);
+  font-weight: 600;
 }

@@ -109,13 +109,33 @@ function CardInfo(props) {
     });
   };
 
+  const { updateCard, boardId } = props;
   useEffect(() => {
-    if (props.updateCard) props.updateCard(props.boardId, values.id, values);
-  }, [values]);
+    if (updateCard) updateCard(boardId, values.id, values);
+  }, [values, updateCard, boardId]);
 
   return (
     <Modal onClose={props.onClose}>
       <div className="cardinfo">
+        <div className="cardinfo_box">
+          <div className="cardinfo_box_title">
+            <CheckSquare />
+            <p>Status</p>
+          </div>
+          <div className="cardinfo_status">
+            <label className="cardinfo_status_toggle">
+              <input
+                type="checkbox"
+                checked={values.completed || false}
+                onChange={(e) => setValues({ ...values, completed: e.target.checked })}
+              />
+              <span className="cardinfo_status_label">
+                {values.completed ? "✓ Completed" : "Mark as Complete"}
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div className="cardinfo_box">
           <div className="cardinfo_box_title">
             <Type />

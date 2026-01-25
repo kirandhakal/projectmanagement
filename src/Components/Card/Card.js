@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckSquare, Clock, MoreHorizontal } from "react-feather";
+import { CheckSquare, Clock, MoreHorizontal, Check } from "react-feather";
 
 import Dropdown from "../Dropdown/Dropdown";
 
@@ -10,7 +10,16 @@ function Card(props) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  const { id, title, date, tasks, labels } = props.card;
+  const { id, title, date, tasks, labels, completed } = props.card;
+
+  const toggleCompleted = (e) => {
+    e.stopPropagation();
+    const updatedCard = {
+      ...props.card,
+      completed: !completed
+    };
+    props.updateCard(props.boardId, id, updatedCard);
+  };
 
   const formatDate = (value) => {
     if (!value) return "";
@@ -48,13 +57,21 @@ function Card(props) {
         />
       )}
       <div
-        className="card"
+        className={`card ${completed ? 'card-completed' : ''}`}
         draggable
         onDragEnd={() => props.dragEnded(props.boardId, id)}
         onDragEnter={() => props.dragEntered(props.boardId, id)}
         onClick={() => setShowModal(true)}
       >
         <div className="card_top">
+          <div className="card_completion">
+            <div
+              className={`card_completion_checkbox ${completed ? 'checked' : ''}`}
+              onClick={toggleCompleted}
+            >
+              {completed && <Check size={14} />}
+            </div>
+          </div>
           <div className="card_top_labels">
             {labels?.map((item, index) => (
               <label key={index} style={{ backgroundColor: item.color }}>
@@ -82,7 +99,7 @@ function Card(props) {
             )}
           </div>
         </div>
-        <div className="card_title">{title}</div>
+        <div className={`card_title ${completed ? 'completed-text' : ''}`}>{title}</div>
         <div className="card_footer">
           {date && (
             <p className="card_footer_item">
