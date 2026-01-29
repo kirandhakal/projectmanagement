@@ -2,8 +2,6 @@ import React, { useState } from "react";
 
 import { X } from "react-feather";
 
-import "./Editable.css";
-
 function Editable(props) {
   const [isEditable, setIsEditable] = useState(false);
   const [inputText, setInputText] = useState(props.defaultValue || "");
@@ -18,33 +16,45 @@ function Editable(props) {
   };
 
   return (
-    <div className="editable">
+    <div className="w-full">
       {isEditable ? (
         <form
-          className={`editable_edit ${props.editClass ? props.editClass : ""}`}
+          className={`flex flex-col gap-3 ${props.editClass ? props.editClass : ""}`}
           onSubmit={submission}
         >
           <input
             type="text"
+            className="w-full px-4 py-2 border-2 border-primary-purple/30 focus:border-primary-purple bg-white dark:bg-slate-800 rounded-lg text-sm text-gray-700 dark:text-gray-200 outline-none transition-all duration-200"
             value={inputText}
             placeholder={props.placeholder || props.text}
             onChange={(event) => setInputText(event.target.value)}
             autoFocus
           />
-          <div className="editable_edit_footer">
-            <button type="submit">{props.buttonText || "Add"}</button>
-            <X onClick={() => setIsEditable(false)} className="closeIcon" />
+          <div className="flex items-center gap-2">
+            <button 
+              type="submit"
+              className="px-4 py-2 bg-primary-purple hover:bg-primary-purple-dark text-white rounded-lg text-sm font-bold transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              {props.buttonText || "Add"}
+            </button>
+            <button
+              type="button"
+              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+              onClick={() => setIsEditable(false)}
+            >
+              <X size={18} />
+            </button>
           </div>
         </form>
       ) : (
-        <p
-          className={`editable_display ${
+        <div
+          className={`cursor-pointer transition-all duration-200 ${
             props.displayClass ? props.displayClass : ""
           }`}
           onClick={() => setIsEditable(true)}
         >
           {props.text}
-        </p>
+        </div>
       )}
     </div>
   );
