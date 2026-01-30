@@ -49,7 +49,7 @@ function Board(props) {
         className="flex-1 flex flex-col gap-4 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-700"
         onDragOver={(e) => e.preventDefault()}
       >
-        {props.board?.cards?.map((item) => (
+        {props.board?.cards?.map((item, index) => (
           <Card
             key={item.id}
             card={item}
@@ -60,6 +60,7 @@ function Board(props) {
             updateCard={props.updateCard}
             moveToNextBoard={props.moveToNextBoard}
             moveToLastBoard={props.moveToLastBoard}
+            isFirstBoard={index === 0}
             isLastBoard={props.isLastBoard}
           />
         ))}

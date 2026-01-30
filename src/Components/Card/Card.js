@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { CheckSquare, Clock, MoreHorizontal, Check, ArrowRight } from "react-feather";
+import { CheckSquare, Clock, MoreHorizontal, Check, ArrowRight, ArrowLeft } from "react-feather";
 
 import Dropdown from "../Dropdown/Dropdown";
-
 import CardInfo from "./CardInfo/CardInfo";
 
 function Card(props) {
@@ -26,18 +25,8 @@ function Card(props) {
     if (!date) return "";
 
     const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Aprl",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mar", "Aprl", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
 
     const day = date.getDate();
@@ -59,6 +48,7 @@ function Card(props) {
   };
 
   const countdown = getCountdown(date);
+  const allTasksCompleted = tasks && tasks.length > 0 && tasks.every(t => t.completed);
 
   return (
     <>
@@ -70,13 +60,14 @@ function Card(props) {
           updateCard={props.updateCard}
           moveToNextBoard={props.moveToNextBoard}
           moveToLastBoard={props.moveToLastBoard}
+          isFirstBoard={props.isFirstBoard}
           isLastBoard={props.isLastBoard}
         />
       )}
       <div
-        className={`p-4 flex flex-col gap-4 rounded-xl border transition-all duration-200 cursor-pointer relative group ${
+        className={`p-4 flex flex-col gap-4 rounded-xl border transition-all duration-300 cursor-pointer relative group ${
           completed 
-            ? 'bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-700 opacity-70 hover:opacity-100' 
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50 shadow-lg' 
             : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-primary-purple'
         }`}
         draggable
@@ -89,18 +80,18 @@ function Card(props) {
           e.stopPropagation();
           props.dragEntered(props.boardId, id);
         }}
-        onDragOver={(e) => e.preventDefault()}
         onClick={() => setShowModal(true)}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center">
             <div
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer ${
                 completed 
-                  ? 'bg-primary-purple border-primary-purple text-white hover:bg-primary-purple-dark' 
-                  : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-primary-purple hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                  ? 'bg-green-500 border-green-500 text-white hover:bg-green-600 animate-bounce' 
+                  : 'bg-white dark:bg-slate-700 border-gray-300 dark:border-slate-600 hover:border-primary-purple hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
               }`}
               onClick={toggleCompleted}
+              title={completed ? "Mark as Incomplete" : "Mark as Complete"}
             >
               {completed && <Check size={14} />}
             </div>
@@ -157,37 +148,53 @@ function Card(props) {
             </>
           )}
           {props.card.assignees?.length > 0 && (
-            <div className="flex items-center gap-1">
-              {props.card.assignees.slice(0, 2).map((a, i) => (
-                <span key={i} className="w-6 h-6 rounded-full bg-primary-purple/20 text-primary-purple flex items-center justify-center text-[10px] font-bold" title={typeof a === "string" ? a : a.name}>
+            <div className="flex items-center -space-x-2">
+              {props.card.assignees.slice(0, 3).map((a, i) => (
+                <span key={i} className="w-6 h-6 rounded-full bg-primary-purple/20 text-primary-purple flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800" title={typeof a === "string" ? a : a.name}>
                   {(typeof a === "string" ? a : a.name).charAt(0).toUpperCase()}
                 </span>
               ))}
-              {props.card.assignees.length > 2 && (
-                <span className="text-[10px] text-gray-400">+{props.card.assignees.length - 2}</span>
+              {props.card.assignees.length > 3 && (
+                <span className="text-xs text-gray-400 ml-3">+{props.card.assignees.length - 3}</span>
               )}
             </div>
           )}
           {tasks && tasks?.length > 0 && (
             <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">
-              <CheckSquare size={14} className={tasks.every(t => t.completed) ? 'text-accent-green' : ''} />
-              <span className={tasks.every(t => t.completed) ? 'text-accent-green' : ''}>
+              <CheckSquare size={14} className={allTasksCompleted ? 'text-accent-green' : ''} />
+              <span className={allTasksCompleted ? 'text-accent-green' : ''}>
                 {tasks?.filter((item) => item.completed)?.length}/{tasks?.length}
               </span>
             </p>
           )}
-          {tasks && tasks?.length > 0 && tasks.every(t => t.completed) && !props.isLastBoard && (
-            <button 
-              className="ml-auto p-1.5 bg-accent-green hover:bg-green-600 text-white rounded-lg shadow-sm hover:shadow-md transition-all animate-pulse"
-              onClick={(e) => {
-                e.stopPropagation();
-                props.moveToNextBoard(props.boardId, id);
-              }}
-              title="Move to next board"
-            >
-              <ArrowRight size={14} />
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {!props.isFirstBoard && (
+              <button 
+                className="p-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.moveToLastBoard(props.boardId, id);
+                }}
+                title="Move to previous board"
+              >
+                <ArrowLeft size={14} />
+              </button>
+            )}
+            {(completed || allTasksCompleted) && !props.isLastBoard && (
+              <button 
+                className={`p-1.5 rounded-lg shadow-sm hover:shadow-md transition-all ${
+                  completed ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse' : 'bg-accent-green hover:bg-green-600 text-white'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.moveToNextBoard(props.boardId, id);
+                }}
+                title="Move to next board"
+              >
+                <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </>
