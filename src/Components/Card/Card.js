@@ -45,6 +45,21 @@ function Card(props) {
     return day + " " + month;
   };
 
+  const getCountdown = (dateStr) => {
+    if (!dateStr) return null;
+    const due = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    const diffMs = due - today;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { text: `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? "s" : ""}`, overdue: true };
+    if (diffDays === 0) return { text: "Due today", overdue: false };
+    return { text: `${diffDays} day${diffDays !== 1 ? "s" : ""} left`, overdue: false };
+  };
+
+  const countdown = getCountdown(date);
+
   return (
     <>
       {showModal && (
@@ -54,6 +69,7 @@ function Card(props) {
           boardId={props.boardId}
           updateCard={props.updateCard}
           moveToNextBoard={props.moveToNextBoard}
+          moveToLastBoard={props.moveToLastBoard}
           isLastBoard={props.isLastBoard}
         />
       )}
@@ -126,12 +142,31 @@ function Card(props) {
         <div className={`text-sm font-medium leading-relaxed ${completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'}`}>
           {title}
         </div>
-        <div className="flex items-center gap-4 mt-auto">
+        <div className="flex items-center gap-4 mt-auto flex-wrap">
           {date && (
-            <p className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 font-medium">
-              <Clock size={14} />
-              {formatDate(date)}
-            </p>
+            <>
+              <p className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 font-medium">
+                <Clock size={14} />
+                {formatDate(date)}
+              </p>
+              {countdown && (
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${countdown.overdue ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-primary-purple/10 text-primary-purple dark:text-primary-purple-light"}`}>
+                  {countdown.text}
+                </span>
+              )}
+            </>
+          )}
+          {props.card.assignees?.length > 0 && (
+            <div className="flex items-center gap-1">
+              {props.card.assignees.slice(0, 2).map((a, i) => (
+                <span key={i} className="w-6 h-6 rounded-full bg-primary-purple/20 text-primary-purple flex items-center justify-center text-[10px] font-bold" title={typeof a === "string" ? a : a.name}>
+                  {(typeof a === "string" ? a : a.name).charAt(0).toUpperCase()}
+                </span>
+              ))}
+              {props.card.assignees.length > 2 && (
+                <span className="text-[10px] text-gray-400">+{props.card.assignees.length - 2}</span>
+              )}
+            </div>
           )}
           {tasks && tasks?.length > 0 && (
             <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">

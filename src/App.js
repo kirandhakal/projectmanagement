@@ -153,6 +153,7 @@ function App() {
                   priority: "medium",
                   assignees: [],
                   description: "",
+                  descMedia: [],
                   completed: false,
                 }]
               };
@@ -276,7 +277,7 @@ function App() {
     setProjects(updatedProjects);
   };
 
-  const moveToNextBoard = (bid, cid) => {
+  const moveToNextBoard = (bid, cid, cardOverride) => {
     const updatedProjects = projects.map(project => {
       if (project.id === activeProjectId) {
         const boards = [...project.boards];
@@ -286,18 +287,52 @@ function App() {
         const cardIndex = boards[boardIndex].cards.findIndex(c => c.id === cid);
         if (cardIndex < 0) return project;
 
-        const card = boards[boardIndex].cards[cardIndex];
-        
+        const card = cardOverride || boards[boardIndex].cards[cardIndex];
+
         // Remove from current board
         boards[boardIndex] = {
-            ...boards[boardIndex],
-            cards: boards[boardIndex].cards.filter(c => c.id !== cid)
+          ...boards[boardIndex],
+          cards: boards[boardIndex].cards.filter(c => c.id !== cid)
         };
-        
+
         // Add to next board
         boards[boardIndex + 1] = {
-            ...boards[boardIndex + 1],
-            cards: [...boards[boardIndex + 1].cards, card]
+          ...boards[boardIndex + 1],
+          cards: [...boards[boardIndex + 1].cards, card]
+        };
+
+        return { ...project, boards };
+      }
+      return project;
+    });
+    setProjects(updatedProjects);
+  };
+
+  const moveToLastBoard = (bid, cid, cardOverride) => {
+    const updatedProjects = projects.map(project => {
+      if (project.id === activeProjectId) {
+        const boards = [...project.boards];
+        if (boards.length < 2) return project;
+
+        const boardIndex = boards.findIndex(b => b.id === bid);
+        if (boardIndex < 0) return project;
+
+        const cardIndex = boards[boardIndex].cards.findIndex(c => c.id === cid);
+        if (cardIndex < 0) return project;
+
+        const card = cardOverride || boards[boardIndex].cards[cardIndex];
+        const lastIndex = boards.length - 1;
+        if (boardIndex === lastIndex) return project;
+
+        // Remove from current board
+        boards[boardIndex] = {
+          ...boards[boardIndex],
+          cards: boards[boardIndex].cards.filter(c => c.id !== cid)
+        };
+        // Add to last board (with override so completed state etc. is correct)
+        boards[lastIndex] = {
+          ...boards[lastIndex],
+          cards: [...boards[lastIndex].cards, card]
         };
 
         return { ...project, boards };
@@ -509,6 +544,7 @@ function App() {
                   dragEntered={dragEntered}
                   updateCard={updateCard}
                   moveToNextBoard={moveToNextBoard}
+                  moveToLastBoard={moveToLastBoard}
                   isLastBoard={index === filteredBoards.length - 1}
                 />
               ))}

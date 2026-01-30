@@ -11,7 +11,7 @@ function Board(props) {
   const cardCount = props.board?.cards?.length || 0;
 
   return (
-    <div 
+    <div
       className="min-w-[320px] w-[320px] max-h-full flex flex-col gap-4 bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-slate-700 transition-all duration-300 hover:shadow-md"
       onDragEnter={() => props.dragEntered(props.board?.id, "")}
       onDragOver={(e) => e.preventDefault()}
@@ -45,7 +45,7 @@ function Board(props) {
         </div>
       </div>
 
-      <div 
+      <div
         className="flex-1 flex flex-col gap-4 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-700"
         onDragOver={(e) => e.preventDefault()}
       >
@@ -59,6 +59,7 @@ function Board(props) {
             dragEnded={props.dragEnded}
             updateCard={props.updateCard}
             moveToNextBoard={props.moveToNextBoard}
+            moveToLastBoard={props.moveToLastBoard}
             isLastBoard={props.isLastBoard}
           />
         ))}
@@ -67,7 +68,7 @@ function Board(props) {
           text={
             <div className="flex items-center gap-2">
               <Plus size={16} />
-              <span className="font-medium text-sm">Add Task</span>
+              <span className="font-medium text-sm text-red-500">Add Task</span>
             </div>
           }
           placeholder="Enter task title..."
