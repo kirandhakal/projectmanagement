@@ -12,11 +12,13 @@ import {
   Home,
   Calendar,
   Settings,
-  Users
+  Users,
+  GitPullRequest
 } from "lucide-react";
 
 import Board from "./Components/Board/Board";
 import Editable from "./Components/Editabled/Editable";
+import WorkflowView from "./views/WorkflowView";
 
 // tailwind.css is imported in index.js via index.css
 
@@ -52,6 +54,9 @@ function App() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("board");
+  const [activeNav, setActiveNav] = useState(
+    localStorage.getItem("activeNav") || "kanban"
+  );
 
   useEffect(() => {
     if (darkMode) {
@@ -73,6 +78,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("expanded-projects", JSON.stringify(expandedProjects));
   }, [expandedProjects]);
+
+  useEffect(() => {
+    localStorage.setItem("activeNav", activeNav);
+  }, [activeNav]);
 
   const activeProject = projects.find(p => p.id === activeProjectId);
   const boards = activeProject?.boards || [];
@@ -224,21 +233,21 @@ function App() {
         t_cardIndex = newBoards[t_boardIndex]?.cards?.findIndex(
           (item) => item.id === targetCard.cid
         );
-        
+
         // If target card is not found (e.g. empty board), append to end
         if (t_cardIndex < 0) {
           t_cardIndex = newBoards[t_boardIndex].cards.length;
         }
 
         const sourceCard = newBoards[s_boardIndex].cards[s_cardIndex];
-        
+
         // Create copies of the cards arrays to avoid direct mutation
         newBoards[s_boardIndex] = {
           ...newBoards[s_boardIndex],
           cards: [...newBoards[s_boardIndex].cards]
         };
         newBoards[s_boardIndex].cards.splice(s_cardIndex, 1);
-        
+
         // If moving to a different board, copy its cards array too
         if (s_boardIndex !== t_boardIndex) {
           newBoards[t_boardIndex] = {
@@ -246,7 +255,7 @@ function App() {
             cards: [...newBoards[t_boardIndex].cards]
           };
         }
-        
+
         newBoards[t_boardIndex].cards.splice(t_cardIndex, 0, sourceCard);
 
         return {
@@ -387,9 +396,26 @@ function App() {
         {!sidebarCollapsed && (
           <>
             <div className="p-4 border-b border-gray-100 dark:border-slate-700">
-              <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-primary-purple cursor-pointer transition-all duration-200 text-sm font-medium mb-1">
+              <div
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium mb-1 ${activeNav === 'kanban'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 text-primary-purple'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                onClick={() => setActiveNav('kanban')}
+              >
                 <Home size={18} />
-                <span>Home</span>
+                <span>Kanban Board</span>
+              </div>
+              <div
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium mb-1 ${activeNav === 'workflow'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 text-primary-purple'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                onClick={() => setActiveNav('workflow')}
+              >
+                <GitPullRequest size={18} />
+                <span>Workflow Board</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-gradient-to-r from-primary-purple to-accent-pink text-white rounded-full ml-auto">New</span>
               </div>
               <div className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-all duration-200 text-sm font-medium mb-1">
                 <Calendar size={18} />
@@ -490,108 +516,112 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <div className="h-16 flex items-center justify-between px-8 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 z-40">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-              <Folder size={20} style={{ color: activeProject?.color }} />
-              <h1 className="text-xl font-bold truncate max-w-[300px]">{activeProject?.name || "Select a Project"}</h1>
-            </div>
-            <div className="hidden md:flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <LayoutGrid size={14} />
-                <span className="font-semibold text-gray-900 dark:text-white underline underline-offset-4 decoration-primary-purple decoration-2">{boards.length}</span>
-                <span>Boards</span>
+      {activeNav === 'workflow' ? (
+        <WorkflowView />
+      ) : (
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div className="h-16 flex items-center justify-between px-8 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 z-40">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                <Folder size={20} style={{ color: activeProject?.color }} />
+                <h1 className="text-xl font-bold truncate max-w-[300px]">{activeProject?.name || "Select a Project"}</h1>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <ListIcon size={14} />
-                <span className="font-semibold text-gray-900 dark:text-white underline underline-offset-4 decoration-accent-green decoration-2">{boards.reduce((acc, b) => acc + b.cards.length, 0)}</span>
-                <span>Tasks</span>
+              <div className="hidden md:flex items-center gap-4">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <LayoutGrid size={14} />
+                  <span className="font-semibold text-gray-900 dark:text-white underline underline-offset-4 decoration-primary-purple decoration-2">{boards.length}</span>
+                  <span>Boards</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <ListIcon size={14} />
+                  <span className="font-semibold text-gray-900 dark:text-white underline underline-offset-4 decoration-accent-green decoration-2">{boards.reduce((acc, b) => acc + b.cards.length, 0)}</span>
+                  <span>Tasks</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative group hidden lg:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-purple transition-colors duration-200" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-transparent focus:border-primary-purple/20 focus:bg-white dark:focus:bg-slate-600 rounded-full text-sm outline-none transition-all duration-200 w-64"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center bg-gray-50 dark:bg-slate-700 p-1 rounded-lg">
+                <button
+                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === "board" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-purple" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"}`}
+                  onClick={() => setViewMode("board")}
+                >
+                  <LayoutGrid size={14} />
+                  Board
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === "list" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-purple" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"}`}
+                  onClick={() => setViewMode("list")}
+                >
+                  <ListIcon size={14} />
+                  List
+                </button>
+              </div>
+              <div
+                className="p-2 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-purple dark:hover:text-primary-purple-light transition-all duration-200"
+                onClick={() => setDarkMode(!darkMode)}
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative group hidden lg:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-purple transition-colors duration-200" size={16} />
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-transparent focus:border-primary-purple/20 focus:bg-white dark:focus:bg-slate-600 rounded-full text-sm outline-none transition-all duration-200 w-64"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center bg-gray-50 dark:bg-slate-700 p-1 rounded-lg">
-              <button
-                className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === "board" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-purple" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"}`}
-                onClick={() => setViewMode("board")}
-              >
-                <LayoutGrid size={14} />
-                Board
-              </button>
-              <button
-                className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === "list" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-purple" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"}`}
-                onClick={() => setViewMode("list")}
-              >
-                <ListIcon size={14} />
-                List
-              </button>
-            </div>
-            <div 
-              className="p-2 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-purple dark:hover:text-primary-purple-light transition-all duration-200" 
-              onClick={() => setDarkMode(!darkMode)}
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-x-auto overflow-y-hidden p-8 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-700">
-          {activeProject ? (
-            <div className="flex gap-8 h-full items-start">
-              {filteredBoards.map((item, index) => (
-                <Board
-                  key={item.id}
-                  board={item}
-                  addCard={addCardHandler}
-                  removeBoard={() => removeBoard(item.id)}
-                  updateBoardTitle={updateBoardTitle}
-                  removeCard={removeCard}
-                  dragEnded={dragEnded}
-                  dragEntered={dragEntered}
-                  updateCard={updateCard}
-                  moveToNextBoard={moveToNextBoard}
-                  moveToLastBoard={moveToLastBoard}
-                  isLastBoard={index === filteredBoards.length - 1}
-                />
-              ))}
-              <div className="min-w-[300px]">
-                <Editable
-                  displayClass="flex items-center justify-center gap-2 w-full p-4 bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl text-gray-500 dark:text-gray-400 hover:border-primary-purple hover:text-primary-purple transition-all duration-200"
-                  editClass="p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg"
-                  placeholder="Enter Board Name"
-                  text={
-                    <>
-                      <Plus size={20} />
-                      <span className="font-semibold">Add Board</span>
-                    </>
-                  }
-                  buttonText="Add Board"
-                  onSubmit={addBoardHandler}
-                />
+          <div className="flex-1 overflow-x-auto overflow-y-hidden p-8 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-700">
+            {activeProject ? (
+              <div className="flex gap-8 h-full items-start">
+                {filteredBoards.map((item, index) => (
+                  <Board
+                    key={item.id}
+                    board={item}
+                    addCard={addCardHandler}
+                    removeBoard={() => removeBoard(item.id)}
+                    updateBoardTitle={updateBoardTitle}
+                    removeCard={removeCard}
+                    dragEnded={dragEnded}
+                    dragEntered={dragEntered}
+                    updateCard={updateCard}
+                    moveToNextBoard={moveToNextBoard}
+                    moveToLastBoard={moveToLastBoard}
+                    isLastBoard={index === filteredBoards.length - 1}
+                  />
+                ))}
+                <div className="min-w-[300px]">
+                  <Editable
+                    displayClass="flex items-center justify-center gap-2 w-full p-4 bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl text-gray-500 dark:text-gray-400 hover:border-primary-purple hover:text-primary-purple transition-all duration-200"
+                    editClass="p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg"
+                    placeholder="Enter Board Name"
+                    text={
+                      <>
+                        <Plus size={20} />
+                        <span className="font-semibold">Add Board</span>
+                      </>
+                    }
+                    buttonText="Add Board"
+                    onSubmit={addBoardHandler}
+                  />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center">
-              <div className="p-8 bg-gray-100 dark:bg-slate-800 rounded-full text-gray-400 dark:text-gray-600 mb-6">
-                <Folder size={80} />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <div className="p-8 bg-gray-100 dark:bg-slate-800 rounded-full text-gray-400 dark:text-gray-600 mb-6">
+                  <Folder size={80} />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No Project Selected</h2>
+                <p className="text-gray-500 dark:text-gray-400 max-w-xs">Select a project from the sidebar or create a new one to get started.</p>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No Project Selected</h2>
-              <p className="text-gray-500 dark:text-gray-400 max-w-xs">Select a project from the sidebar or create a new one to get started.</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
