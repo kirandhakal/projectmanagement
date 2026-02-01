@@ -23,8 +23,17 @@ function Board(props) {
             style={{ backgroundColor: props.board?.color }}
           />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-base text-gray-900 dark:text-white truncate m-0 leading-tight">{props.board?.title}</p>
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{cardCount} {cardCount === 1 ? 'task' : 'tasks'}</span>
+            <Editable
+              defaultValue={props.board?.title}
+              text={props.board?.title}
+              placeholder="Board title"
+              displayClass="font-semibold text-base text-gray-900 dark:text-white truncate m-0 leading-tight cursor-text hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded px-1 -ml-1 py-0.5"
+              editClass="font-semibold text-base bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-2 outline-none w-full"
+              onSubmit={(value) => props.updateBoardTitle?.(props.board?.id, value)}
+              buttonText="Save"
+              cancelButtonText="Cancel"
+            />
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium block mt-0.5">{cardCount} {cardCount === 1 ? 'task' : 'tasks'}</span>
           </div>
         </div>
         <div
@@ -74,8 +83,10 @@ function Board(props) {
           }
           placeholder="Enter task title..."
           displayClass="flex items-center gap-2 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg text-gray-500 dark:text-gray-400 hover:text-primary-purple dark:hover:text-primary-purple-light hover:bg-white dark:hover:bg-slate-700 border border-transparent hover:border-primary-purple/20 transition-all duration-200"
-          editClass="p-3 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm"
+          editClass="p-3 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col gap-3"
           onSubmit={(value) => props.addCard(props.board?.id, value)}
+          buttonText="Finish"
+          cancelButtonText="Cancel"
         />
       </div>
     </div>

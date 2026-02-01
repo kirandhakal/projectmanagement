@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckSquare, Clock, MoreHorizontal, Check, ArrowRight, ArrowLeft } from "react-feather";
+import { CheckSquare, Clock, MoreHorizontal, Check, ArrowRight } from "react-feather";
 
 import Dropdown from "../Dropdown/Dropdown";
 import CardInfo from "./CardInfo/CardInfo";
@@ -149,11 +149,17 @@ function Card(props) {
           )}
           {props.card.assignees?.length > 0 && (
             <div className="flex items-center -space-x-2">
-              {props.card.assignees.slice(0, 3).map((a, i) => (
-                <span key={i} className="w-6 h-6 rounded-full bg-primary-purple/20 text-primary-purple flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800" title={typeof a === "string" ? a : a.name}>
-                  {(typeof a === "string" ? a : a.name).charAt(0).toUpperCase()}
-                </span>
-              ))}
+              {props.card.assignees.slice(0, 3).map((a, i) => {
+                const name = typeof a === "string" ? a : (a.name || "");
+                const role = typeof a === "string" ? "" : (a.role || "");
+                const title = role ? `${role}: ${name}` : name;
+                const initial = (name || role || "?").charAt(0).toUpperCase();
+                return (
+                  <span key={i} className="w-6 h-6 rounded-full bg-primary-purple/20 text-primary-purple flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800" title={title}>
+                    {initial}
+                  </span>
+                );
+              })}
               {props.card.assignees.length > 3 && (
                 <span className="text-xs text-gray-400 ml-3">+{props.card.assignees.length - 3}</span>
               )}
@@ -168,18 +174,6 @@ function Card(props) {
             </p>
           )}
           <div className="ml-auto flex items-center gap-2">
-            {!props.isFirstBoard && (
-              <button 
-                className="p-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  props.moveToLastBoard(props.boardId, id);
-                }}
-                title="Move to previous board"
-              >
-                <ArrowLeft size={14} />
-              </button>
-            )}
             {(completed || allTasksCompleted) && !props.isLastBoard && (
               <button 
                 className={`p-1.5 rounded-lg shadow-sm hover:shadow-md transition-all ${

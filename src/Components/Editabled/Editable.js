@@ -4,7 +4,12 @@ import { X } from "react-feather";
 
 function Editable(props) {
   const [isEditable, setIsEditable] = useState(false);
-  const [inputText, setInputText] = useState(props.defaultValue || "");
+  const [inputText, setInputText] = useState(props.defaultValue ?? "");
+
+  const openEdit = () => {
+    setInputText(props.defaultValue ?? (typeof props.text === "string" ? props.text : "") ?? "");
+    setIsEditable(true);
+  };
 
   const submission = (e) => {
     e.preventDefault();
@@ -13,6 +18,11 @@ function Editable(props) {
       props.onSubmit(inputText);
     }
     setIsEditable(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditable(false);
+    setInputText(props.defaultValue ?? "");
   };
 
   return (
@@ -26,24 +36,34 @@ function Editable(props) {
             type="text"
             className="w-full px-4 py-2 border-2 border-primary-purple/30 focus:border-primary-purple bg-white dark:bg-slate-800 rounded-lg text-sm text-gray-700 dark:text-gray-200 outline-none transition-all duration-200"
             value={inputText}
-            placeholder={props.placeholder || props.text}
+            placeholder={props.placeholder || (typeof props.text === "string" ? props.text : "")}
             onChange={(event) => setInputText(event.target.value)}
             autoFocus
           />
           <div className="flex items-center gap-2">
-            <button 
+            <button
               type="submit"
               className="px-4 py-2 bg-primary-purple hover:bg-primary-purple-dark text-white rounded-lg text-sm font-bold transition-all duration-200 shadow-sm hover:shadow-md"
             >
               {props.buttonText || "Add"}
             </button>
-            <button
-              type="button"
-              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
-              onClick={() => setIsEditable(false)}
-            >
-              <X size={18} />
-            </button>
+            {props.cancelButtonText ? (
+              <button
+                type="button"
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-medium transition-all duration-200"
+                onClick={cancelEdit}
+              >
+                {props.cancelButtonText}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                onClick={cancelEdit}
+              >
+                <X size={18} />
+              </button>
+            )}
           </div>
         </form>
       ) : (
@@ -51,7 +71,7 @@ function Editable(props) {
           className={`cursor-pointer transition-all duration-200 ${
             props.displayClass ? props.displayClass : ""
           }`}
-          onClick={() => setIsEditable(true)}
+          onClick={openEdit}
         >
           {props.text}
         </div>

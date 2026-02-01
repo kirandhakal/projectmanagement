@@ -135,6 +135,22 @@ function App() {
     setProjects(updatedProjects);
   };
 
+  const updateBoardTitle = (boardId, newTitle) => {
+    if (!newTitle?.trim()) return;
+    const updatedProjects = projects.map(project => {
+      if (project.id === activeProjectId) {
+        return {
+          ...project,
+          boards: project.boards.map(board =>
+            board.id === boardId ? { ...board, title: newTitle.trim() } : board
+          )
+        };
+      }
+      return project;
+    });
+    setProjects(updatedProjects);
+  };
+
   const addCardHandler = (id, title) => {
     const updatedProjects = projects.map(project => {
       if (project.id === activeProjectId) {
@@ -539,6 +555,7 @@ function App() {
                   board={item}
                   addCard={addCardHandler}
                   removeBoard={() => removeBoard(item.id)}
+                  updateBoardTitle={updateBoardTitle}
                   removeCard={removeCard}
                   dragEnded={dragEnded}
                   dragEntered={dragEntered}
