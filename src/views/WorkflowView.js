@@ -98,6 +98,20 @@ function WorkflowView() {
         setSelectedTask(task);
     };
 
+    // Update task (for discussions, media, etc.)
+    const handleUpdateTask = (taskId, updatedTask) => {
+        setTasks(prev => prev.map(task => {
+            if (task.id === taskId) {
+                return { ...task, ...updatedTask };
+            }
+            return task;
+        }));
+        // Update selected task if it's the one being modified
+        if (selectedTask?.id === taskId) {
+            setSelectedTask({ ...selectedTask, ...updatedTask });
+        }
+    };
+
     // Filter tasks
     const filteredTasks = tasks.filter(task => {
         // Search filter
@@ -188,8 +202,8 @@ function WorkflowView() {
                         {/* Filter Toggle */}
                         <button
                             className={`p-2 rounded-lg transition-all ${showFilters
-                                    ? 'bg-primary-purple text-white'
-                                    : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
+                                ? 'bg-primary-purple text-white'
+                                : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
                                 }`}
                             onClick={() => setShowFilters(!showFilters)}
                         >
@@ -200,8 +214,8 @@ function WorkflowView() {
                         <div className="flex items-center bg-gray-100 dark:bg-slate-700 p-1 rounded-lg">
                             <button
                                 className={`p-2 rounded-md transition-all ${viewMode === 'board'
-                                        ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-purple'
-                                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                                    ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-purple'
+                                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                                     }`}
                                 onClick={() => setViewMode('board')}
                             >
@@ -209,8 +223,8 @@ function WorkflowView() {
                             </button>
                             <button
                                 className={`p-2 rounded-md transition-all ${viewMode === 'list'
-                                        ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-purple'
-                                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                                    ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-purple'
+                                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                                     }`}
                                 onClick={() => setViewMode('list')}
                             >
@@ -311,6 +325,7 @@ function WorkflowView() {
                     onClose={() => setSelectedTask(null)}
                     onAdvance={handleAdvanceTask}
                     onReject={handleRejectTask}
+                    onUpdateTask={handleUpdateTask}
                 />
             )}
         </div>

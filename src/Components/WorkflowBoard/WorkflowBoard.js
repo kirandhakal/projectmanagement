@@ -9,7 +9,9 @@ import {
     Clock,
     Users,
     User,
-    MessageSquare
+    MessageSquare,
+    GripVertical,
+    Move
 } from 'lucide-react';
 
 import { STAGES, WORKFLOW_ORDER, STAGE_CATEGORIES, getStageById, ROLES } from '../../config/workflowConfig';
@@ -17,10 +19,21 @@ import Modal from '../Modal/Modal';
 
 /**
  * WorkflowCard Component - Displays a task card within a workflow stage
+ * Updated with drag-and-drop support
  */
-function WorkflowCard({ task, stage, onAdvance, onReject, onViewDetails }) {
+function WorkflowCard({
+    task,
+    stage,
+    onAdvance,
+    onReject,
+    onViewDetails,
+    draggable = true,
+    onDragStart,
+    onDragEnd
+}) {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
+    const [isDragging, setIsDragging] = useState(false);
 
     const currentStage = getStageById(task.currentStage);
     const canAdvance = currentStage?.canPass && currentStage?.nextStage;
@@ -65,6 +78,19 @@ function WorkflowCard({ task, stage, onAdvance, onReject, onViewDetails }) {
         }
     };
 
+    // Drag handlers
+    const handleDragStart = (e) => {
+        setIsDragging(true);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, fromStage: task.currentStage }));
+        if (onDragStart) onDragStart(task);
+    };
+
+    const handleDragEnd = (e) => {
+        setIsDragging(false);
+        if (onDragEnd) onDragEnd();
+    };
+
     return (
         <>
             {showRejectModal && (
@@ -104,14 +130,27 @@ function WorkflowCard({ task, stage, onAdvance, onReject, onViewDetails }) {
             )}
 
             <div
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg group ${task.rejected
-                        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50'
-                        : task.completed
-                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50'
-                            : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:border-primary-purple'
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group ${isDragging ? 'opacity-50 scale-95' : ''} ${task.rejected
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50'
+                    : task.completed
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50'
+                        : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:border-primary-purple hover:shadow-lg'
                     }`}
+                draggable={draggable && !task.completed}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
                 onClick={() => onViewDetails(task)}
             >
+                {/* Drag Handle */}
+                {draggable && !task.completed && (
+                    <div className="flex items-center justify-center mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-[10px] font-medium">
+                            <GripVertical size={14} />
+                            <span>Drag to move</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2 mb-3">
                     <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${getPriorityColor(task.priority)}`}>
@@ -124,10 +163,17 @@ function WorkflowCard({ task, stage, onAdvance, onReject, onViewDetails }) {
                 </div>
 
                 {/* Title */}
-                <h4 className={`font-semibold text-sm mb-2 leading-snug ${task.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-100'
-                    }`}>
+                <h4 className={`font-semibold text-sm mb-2 leading-snug ${task.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
                     {task.title}
                 </h4>
+
+                {/* Discussion count */}
+                {task.discussions?.length > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        <MessageSquare size={12} />
+                        <span>{task.discussions.length} messages</span>
+                    </div>
+                )}
 
                 {/* Rejection badge */}
                 {task.rejected && task.rejectionReason && (
@@ -240,14 +286,58 @@ function WorkflowCard({ task, stage, onAdvance, onReject, onViewDetails }) {
 
 /**
  * WorkflowStage Component - A column in the workflow board
+ * Updated with drag-and-drop support
  */
-function WorkflowStage({ stageId, tasks, onAdvance, onReject, onViewDetails }) {
+function WorkflowStage({
+    stageId,
+    tasks,
+    onAdvance,
+    onReject,
+    onViewDetails,
+    onDragStart,
+    onDragEnd,
+    onDragOver,
+    onDrop,
+    isDragOver
+}) {
     const stage = getStageById(stageId);
     const stageTasks = tasks.filter(t => t.currentStage === stageId);
     const ownerRole = stage?.owner ? ROLES[stage.owner.toUpperCase()] : null;
 
+    // Check if this stage can receive drops
+    const canReceiveDrop = (fromStage) => {
+        // Can drop from adjacent stages (next or prev)
+        const currentStageData = getStageById(fromStage);
+        if (!currentStageData) return false;
+        return currentStageData.nextStage === stageId || currentStageData.prevStage === stageId;
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        if (onDragOver) onDragOver(stageId);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            if (onDrop && canReceiveDrop(data.fromStage)) {
+                onDrop(data.taskId, data.fromStage, stageId);
+            }
+        } catch (err) {
+            console.error('Drop error:', err);
+        }
+    };
+
     return (
-        <div className="min-w-[300px] w-[300px] flex flex-col rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700">
+        <div
+            className={`min-w-[300px] w-[300px] flex flex-col rounded-xl border transition-all ${isDragOver
+                    ? 'bg-primary-purple/10 border-primary-purple border-dashed'
+                    : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700'
+                }`}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
             {/* Stage Header */}
             <div className="p-4 border-b border-gray-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 mb-2">
@@ -272,9 +362,19 @@ function WorkflowStage({ stageId, tasks, onAdvance, onReject, onViewDetails }) {
                 )}
             </div>
 
+            {/* Drop Zone Indicator */}
+            {isDragOver && (
+                <div className="mx-3 mt-3 p-3 border-2 border-dashed border-primary-purple rounded-lg bg-primary-purple/5 flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-primary-purple text-xs font-medium">
+                        <Move size={14} />
+                        Drop here to move task
+                    </div>
+                </div>
+            )}
+
             {/* Task Cards */}
             <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-slate-600">
-                {stageTasks.length === 0 ? (
+                {stageTasks.length === 0 && !isDragOver ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                         <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center mb-3">
                             <PlayCircle className="text-gray-400 dark:text-gray-500" size={24} />
@@ -290,6 +390,9 @@ function WorkflowStage({ stageId, tasks, onAdvance, onReject, onViewDetails }) {
                             onAdvance={onAdvance}
                             onReject={onReject}
                             onViewDetails={onViewDetails}
+                            draggable={true}
+                            onDragStart={onDragStart}
+                            onDragEnd={onDragEnd}
                         />
                     ))
                 )}
@@ -301,8 +404,17 @@ function WorkflowStage({ stageId, tasks, onAdvance, onReject, onViewDetails }) {
 /**
  * WorkflowBoard Component - Main workflow board with all stages
  */
-function WorkflowBoard({ tasks, onAdvanceTask, onRejectTask, onViewTaskDetails, viewMode = 'full' }) {
+function WorkflowBoard({
+    tasks,
+    onAdvanceTask,
+    onRejectTask,
+    onViewTaskDetails,
+    onMoveTask,
+    viewMode = 'full'
+}) {
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [draggingTask, setDraggingTask] = useState(null);
+    const [dragOverStage, setDragOverStage] = useState(null);
 
     // Filter stages based on view mode
     const getVisibleStages = () => {
@@ -318,14 +430,55 @@ function WorkflowBoard({ tasks, onAdvanceTask, onRejectTask, onViewTaskDetails, 
 
     const visibleStages = getVisibleStages();
 
+    // Handle drag start
+    const handleDragStart = (task) => {
+        setDraggingTask(task);
+    };
+
+    // Handle drag end
+    const handleDragEnd = () => {
+        setDraggingTask(null);
+        setDragOverStage(null);
+    };
+
+    // Handle drag over stage
+    const handleDragOver = (stageId) => {
+        if (draggingTask) {
+            const currentStage = getStageById(draggingTask.currentStage);
+            const canDrop = currentStage?.nextStage === stageId || currentStage?.prevStage === stageId;
+            if (canDrop) {
+                setDragOverStage(stageId);
+            }
+        }
+    };
+
+    // Handle drop on stage
+    const handleDrop = (taskId, fromStage, toStage) => {
+        const fromStageData = getStageById(fromStage);
+
+        // Determine if advancing or rejecting
+        if (fromStageData?.nextStage === toStage) {
+            // Advance
+            onAdvanceTask(taskId);
+        } else if (fromStageData?.prevStage === toStage || fromStageData?.rejectTarget === toStage) {
+            // This would be a reject - require reason
+            const reason = window.prompt('Please provide a reason for moving this task back:');
+            if (reason?.trim()) {
+                onRejectTask(taskId, reason.trim());
+            }
+        }
+
+        handleDragEnd();
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Category Tabs */}
             <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 overflow-x-auto">
                 <button
                     className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${!selectedCategory
-                            ? 'bg-primary-purple text-white shadow-md'
-                            : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
+                        ? 'bg-primary-purple text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
                         }`}
                     onClick={() => setSelectedCategory(null)}
                 >
@@ -335,8 +488,8 @@ function WorkflowBoard({ tasks, onAdvanceTask, onRejectTask, onViewTaskDetails, 
                     <button
                         key={key}
                         className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${selectedCategory === key
-                                ? 'bg-primary-purple text-white shadow-md'
-                                : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
+                            ? 'bg-primary-purple text-white shadow-md'
+                            : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
                             }`}
                         onClick={() => setSelectedCategory(key)}
                     >
@@ -354,6 +507,14 @@ function WorkflowBoard({ tasks, onAdvanceTask, onRejectTask, onViewTaskDetails, 
                 ))}
             </div>
 
+            {/* Drag instruction */}
+            {draggingTask && (
+                <div className="flex items-center justify-center gap-2 py-2 bg-primary-purple/10 text-primary-purple text-xs font-medium">
+                    <Move size={14} />
+                    Drag to adjacent stage to move task
+                </div>
+            )}
+
             {/* Stages Board */}
             <div className="flex-1 flex gap-4 p-6 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-slate-600">
                 {visibleStages.map(stageId => (
@@ -364,6 +525,11 @@ function WorkflowBoard({ tasks, onAdvanceTask, onRejectTask, onViewTaskDetails, 
                         onAdvance={onAdvanceTask}
                         onReject={onRejectTask}
                         onViewDetails={onViewTaskDetails}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        isDragOver={dragOverStage === stageId}
                     />
                 ))}
             </div>
