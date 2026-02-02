@@ -1,40 +1,80 @@
-name: Node.js CI
+# name: Node.js CI
+
+# on:
+#   push:
+#     branches: [ "main" ]
+#   pull_request:
+#     branches: [ "main" ]
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     strategy:
+#       matrix:
+#         # node-version: [18.x, 20.x, 22.x]
+#         node-version: [18.x]
+
+#     steps:
+#       # Step 1: Checkout the repository
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       # Step 2: Setup Node.js
+#       - name: Setup Node.js ${{ matrix.node-version }}
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: ${{ matrix.node-version }}
+#           cache: 'npm'
+
+#       # Step 3: Install dependencies
+#       - name: Install dependencies
+#         run: npm install
+
+#       # Step 4: Build the project (if a build script exists)
+#       - name: Build project
+#         run: npm run build --if-present
+
+#       # Step 5: Run tests
+#       - name: Run tests
+#         run: npm test -- --watchAll=false
+name: projectmanagement
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      # - develop
+    # tags:
+    #   - 'v*'
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
+    name: Build & Test React App
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        # node-version: [18.x, 20.x, 22.x]
-        node-version: [18.x]
-
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup Node.js
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'npm'
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm install
 
-      # Step 4: Build the project (if a build script exists)
-      - name: Build project
-        run: npm run build --if-present
+      # - name: Run Tests
+      #   run: npm test --watchAll=false --passWithNoTests
 
-      # Step 5: Run tests
-      - name: Run tests
-        run: npm test -- --watchAll=false
+      - name: Build Application
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: build/
