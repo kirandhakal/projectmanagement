@@ -10,6 +10,12 @@ A simple and intuitive Kanban board application for managing tasks and workflows
 - Add new board functionality
 - Clean, minimalist interface with a modern design
 
+## To-do
+
+-Add activity -log of task
+
+
+
 To see live demo :
 ```bash
 https://kirandhakal.github.io/kanban/
