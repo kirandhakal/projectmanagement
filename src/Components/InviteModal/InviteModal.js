@@ -121,8 +121,8 @@ const InviteModal = ({ isOpen, onClose, projectId, boardId, type = 'project' }) 
                                                 type="button"
                                                 onClick={() => setPermissions(prev => ({ ...prev, [p]: !prev[p] }))}
                                                 className={`flex items-center gap-2 p-3 rounded-xl border text-xs font-medium transition-all ${permissions[p]
-                                                        ? 'bg-primary-purple/10 border-primary-purple/30 text-primary-purple'
-                                                        : 'bg-gray-50 dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-500'
+                                                    ? 'bg-primary-purple/10 border-primary-purple/30 text-primary-purple'
+                                                    : 'bg-gray-50 dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-500'
                                                     }`}
                                             >
                                                 <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${permissions[p] ? 'bg-primary-purple border-primary-purple' : 'border-gray-300 dark:border-slate-700'
