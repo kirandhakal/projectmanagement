@@ -47,6 +47,12 @@ export const boardService = {
     getByProject: (projectId) => api.get(`/boards/project/${projectId}`),
     create: (data) => api.post('/boards', data),
     delete: (id) => api.delete(`/boards/${id}`),
+    addMember: (boardId, data) => api.post(`/boards/${boardId}/members`, data),
+};
+
+export const inviteService = {
+    create: (data) => api.post('/invites', data), // Should point to the invite routes
+    getProjectInvites: (projectId) => api.get(`/invites/project/${projectId}`),
 };
 
 export default api;

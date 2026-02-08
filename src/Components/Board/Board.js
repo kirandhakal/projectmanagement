@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal, Plus, UserPlus } from "lucide-react";
 
 import Card from "../Card/Card";
 import Dropdown from "../Dropdown/Dropdown";
@@ -33,24 +33,42 @@ function Board(props) {
               buttonText="Save"
               cancelButtonText="Cancel"
             />
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium block mt-0.5">{cardCount} {cardCount === 1 ? 'task' : 'tasks'}</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{cardCount} {cardCount === 1 ? 'task' : 'tasks'}</span>
+              {props.board?.type === 'Workflow' && (
+                <span className="px-1.5 py-0.5 bg-primary-purple/10 text-primary-purple text-[10px] font-bold rounded uppercase tracking-wider">
+                  Workflow
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        <div
-          className="relative cursor-pointer p-1 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-all duration-200 flex items-center justify-center"
-          onClick={() => setShowDropdown(true)}
-        >
-          <MoreHorizontal size={18} />
-          {showDropdown && (
-            <Dropdown
-              class="absolute right-0 top-full mt-2 z-50 shadow-xl p-2 w-[180px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg"
-              onClose={() => setShowDropdown(false)}
+        <div className="flex items-center gap-1">
+          {props.board?.type === 'Workflow' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); props.onInvite?.(); }}
+              className="p-1.5 text-gray-400 hover:text-primary-purple hover:bg-primary-purple/10 rounded-lg transition-all"
+              title="Invite to board"
             >
-              <div className="px-4 py-2 rounded-md cursor-pointer text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" onClick={() => props.removeBoard()}>
-                Delete Board
-              </div>
-            </Dropdown>
+              <UserPlus size={16} />
+            </button>
           )}
+          <div
+            className="relative cursor-pointer p-1 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-all duration-200 flex items-center justify-center"
+            onClick={() => setShowDropdown(true)}
+          >
+            <MoreHorizontal size={18} />
+            {showDropdown && (
+              <Dropdown
+                class="absolute right-0 top-full mt-2 z-50 shadow-xl p-2 w-[180px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg"
+                onClose={() => setShowDropdown(false)}
+              >
+                <div className="px-4 py-2 rounded-md cursor-pointer text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" onClick={() => props.removeBoard()}>
+                  Delete Board
+                </div>
+              </Dropdown>
+            )}
+          </div>
         </div>
       </div>
 

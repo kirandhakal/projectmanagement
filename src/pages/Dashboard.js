@@ -14,13 +14,15 @@ import {
   Settings,
   Users,
   GitPullRequest,
-  LogOut
+  LogOut,
+  UserPlus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import Board from "../Components/Board/Board";
 import Editable from "../Components/Editabled/Editable";
 import WorkflowView from "../views/WorkflowView";
+import InviteModal from "../Components/InviteModal/InviteModal";
 import { projectService, boardService, authService } from "../services/api";
 
 function Dashboard() {
@@ -50,6 +52,13 @@ function Dashboard() {
   const [activeNav, setActiveNav] = useState(
     localStorage.getItem("activeNav") || "kanban"
   );
+  const [newBoardType, setNewBoardType] = useState('Kanban');
+  const [inviteModal, setInviteModal] = useState({
+    isOpen: false,
+    projectId: null,
+    boardId: null,
+    type: 'project'
+  });
 
   useEffect(() => {
     fetchProjects();
@@ -110,9 +119,10 @@ function Dashboard() {
       const res = await boardService.create({
         title: name,
         projectId: activeProjectId,
-        color: getRandomBoardColor()
+        color: getRandomBoardColor(),
+        type: newBoardType
       });
-      fetchProjects(); // Refresh to get the new board in the project list
+      fetchProjects();
     } catch (err) {
       alert("Failed to create board");
     }
@@ -379,6 +389,15 @@ function Dashboard() {
                   <p className="text-[10px] text-gray-500">{user.role}</p>
                 </div>
               </div>
+              {activeProject && (
+                <button
+                  onClick={() => setInviteModal({ isOpen: true, projectId: activeProjectId, boardId: null, type: 'project' })}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-purple text-white text-xs font-bold rounded-full shadow-lg shadow-primary-purple/20 hover:shadow-xl transition-all"
+                >
+                  <UserPlus size={14} />
+                  <span>Invite People</span>
+                </button>
+              )}
               <div className="relative group hidden lg:block">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-purple transition-colors duration-200" size={16} />
                 <input
@@ -431,9 +450,29 @@ function Dashboard() {
                     moveToNextBoard={moveToNextBoard}
                     moveToLastBoard={moveToLastBoard}
                     isLastBoard={index === filteredBoards.length - 1}
+                    onInvite={() => setInviteModal({
+                      isOpen: true,
+                      projectId: activeProjectId,
+                      boardId: item.id,
+                      type: 'board'
+                    })}
                   />
                 ))}
-                <div className="min-w-[300px]">
+                <div className="min-w-[300px] flex flex-col gap-3">
+                  <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-lg">
+                    <button
+                      onClick={() => setNewBoardType('Kanban')}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${newBoardType === 'Kanban' ? 'bg-white dark:bg-slate-700 text-primary-purple shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                      Kanban
+                    </button>
+                    <button
+                      onClick={() => setNewBoardType('Workflow')}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${newBoardType === 'Workflow' ? 'bg-white dark:bg-slate-700 text-primary-purple shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                      Workflow
+                    </button>
+                  </div>
                   <Editable
                     displayClass="flex items-center justify-center gap-2 w-full p-4 bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl text-gray-500 dark:text-gray-400 hover:border-primary-purple hover:text-primary-purple transition-all duration-200"
                     editClass="p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg"
@@ -461,6 +500,13 @@ function Dashboard() {
           </div>
         </div>
       )}
+      <InviteModal
+        isOpen={inviteModal.isOpen}
+        onClose={() => setInviteModal({ ...inviteModal, isOpen: false })}
+        projectId={inviteModal.projectId}
+        boardId={inviteModal.boardId}
+        type={inviteModal.type}
+      />
     </div>
   );
 }

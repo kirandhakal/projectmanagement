@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { BarChart2, Mail, Lock, User, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { BarChart2, Mail, Lock, User, ArrowRight, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 import { authService } from '../services/api';
 
 const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [role, setRole] = useState('TeamMember');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ const Register = () => {
         setError('');
         setLoading(true);
         try {
-            await authService.register({ name, email, password });
+            await authService.register({ name, email, password, role });
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed. Please try again.');
@@ -90,6 +91,23 @@ const Register = () => {
                                     placeholder="name@company.com"
                                     className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all text-white placeholder:text-slate-600"
                                 />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-400 ml-1">Role</label>
+                            <div className="relative group">
+                                <select
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3.5 px-4 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all text-white appearance-none cursor-pointer"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                >
+                                    <option value="TeamMember">Team Member</option>
+                                    <option value="TeamLead">Team Lead</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="ProjectManager">Project Manager</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
                             </div>
                         </div>
 
