@@ -9,7 +9,8 @@ import {
     Clock,
     MessageSquare,
     GripVertical,
-    Move
+    Move,
+    Folder
 } from 'lucide-react';
 
 import { WORKFLOW_ORDER, STAGE_CATEGORIES, getStageById, ROLES } from '../../config/workflowConfig';
@@ -27,7 +28,8 @@ function WorkflowCard({
     onViewDetails,
     draggable = true,
     onDragStart,
-    onDragEnd
+    onDragEnd,
+    projects = []
 }) {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
@@ -151,8 +153,23 @@ function WorkflowCard({
 
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
+                    <div className="flex items-center gap-2">
+                        <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${getPriorityColor(task.priority)}`}>
+                            {task.priority}
+                        </div>
+                        {/* Project Badge */}
+                        {task.projectId && (
+                            <div
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold"
+                                style={{
+                                    backgroundColor: projects.find(p => p.id === task.projectId)?.color || '#7b68ee',
+                                    color: 'white'
+                                }}
+                            >
+                                <Folder size={10} />
+                                <span>{projects.find(p => p.id === task.projectId)?.name || 'Project'}</span>
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-1 text-xs text-gray-400">
                         <Clock size={12} />
@@ -296,7 +313,8 @@ function WorkflowStage({
     onDragEnd,
     onDragOver,
     onDrop,
-    isDragOver
+    isDragOver,
+    projects = []
 }) {
     const stage = getStageById(stageId);
     const stageTasks = tasks.filter(t => t.currentStage === stageId);
@@ -391,6 +409,7 @@ function WorkflowStage({
                             draggable={true}
                             onDragStart={onDragStart}
                             onDragEnd={onDragEnd}
+                            projects={projects}
                         />
                     ))
                 )}
@@ -408,7 +427,8 @@ function WorkflowBoard({
     onRejectTask,
     onViewTaskDetails,
     onMoveTask,
-    viewMode = 'full'
+    viewMode = 'full',
+    projects = []
 }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [draggingTask, setDraggingTask] = useState(null);
@@ -528,6 +548,7 @@ function WorkflowBoard({
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         isDragOver={dragOverStage === stageId}
+                        projects={projects}
                     />
                 ))}
             </div>
