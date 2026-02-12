@@ -4,7 +4,6 @@ import {
     Image,
     Paperclip,
     X,
-    Smile,
     MoreVertical,
     Reply,
     Trash2,

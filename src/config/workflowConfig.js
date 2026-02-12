@@ -398,7 +398,7 @@ export const transitionTask = (task, action, actorId, reason = '') => {
     return task;
 };
 
-export default {
+const workflowConfig = {
     ROLES,
     STAGES,
     WORKFLOW_ORDER,
@@ -411,3 +411,4 @@ export default {
     createTask,
     transitionTask
 };
+export default workflowConfig;
