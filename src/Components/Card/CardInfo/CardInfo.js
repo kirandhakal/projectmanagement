@@ -16,13 +16,14 @@ import {
 import Modal from "../../Modal/Modal";
 import Editable from "../../Editabled/Editable";
 
-const DEMO_USERS = [
-  { id: "u1", name: "Alex" },
-  { id: "u2", name: "Sam" },
-  { id: "u3", name: "Jordan" },
-  { id: "u4", name: "Casey" },
-  { id: "u5", name: "Riley" },
-];
+function normalizeAssignees(assignees) {
+  if (!assignees?.length) return [];
+  return assignees.map((a, i) => {
+    if (typeof a === "string") return { id: `legacy-${i}`, role: "Assignee", name: a };
+    if (a.role != null && a.name != null) return { id: a.id || `a-${i}`, role: a.role, name: a.name };
+    return { id: a.id || `a-${i}`, role: "Assignee", name: a.name || "" };
+  });
+}
 
 function CardInfo(props) {
   const colors = [
@@ -40,8 +41,8 @@ function CardInfo(props) {
     ...props.card,
     descMedia: props.card.descMedia || [],
     tasks: (props.card.tasks || []).map((t) => ({ ...t, media: t.media || [] })),
+    assignees: normalizeAssignees(props.card.assignees),
   });
-  const [assignDropdownOpen, setAssignDropdownOpen] = useState(false);
   const descFileRef = useRef(null);
 
   const getCountdown = (dateStr) => {
@@ -74,7 +75,12 @@ function CardInfo(props) {
     fileList.forEach((file, i) => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        results[i] = { type: file.type.startsWith("image/") ? "image" : "file", data: ev.target.result, name: file.name };
+        const isPdf = file.type === "application/pdf" || (file.name && file.name.toLowerCase().endsWith(".pdf"));
+        results[i] = {
+          type: file.type.startsWith("image/") ? "image" : isPdf ? "pdf" : "file",
+          data: ev.target.result,
+          name: file.name
+        };
         done++;
         if (done === fileList.length) {
           const toAdd = results.filter(Boolean);
@@ -134,17 +140,23 @@ function CardInfo(props) {
     setValues({ ...values, tasks });
   };
 
-  const toggleAssignee = (user) => {
+  const addAssignee = () => {
     const assignees = [...(values.assignees || [])];
-    const exists = assignees.some((a) => (typeof a === "string" ? a === user.name : a.id === user.id));
-    if (exists) {
-      setValues({ ...values, assignees: assignees.filter((a) => (typeof a === "string" ? a !== user.name : a.id !== user.id)) });
-    } else {
-      setValues({ ...values, assignees: [...assignees, user] });
-    }
+    assignees.push({ id: `a-${Date.now()}-${Math.random().toString(36).slice(2)}`, role: "", name: "" });
+    setValues({ ...values, assignees });
   };
 
-  const isAssigned = (user) => (values.assignees || []).some((a) => (typeof a === "string" ? a === user.name : a.id === user.id));
+  const updateAssignee = (index, field, value) => {
+    const assignees = [...(values.assignees || [])];
+    if (!assignees[index]) return;
+    assignees[index] = { ...assignees[index], [field]: value };
+    setValues({ ...values, assignees });
+  };
+
+  const removeAssignee = (index) => {
+    const assignees = [...(values.assignees || [])].filter((_, i) => i !== index);
+    setValues({ ...values, assignees });
+  };
 
   const addLabel = (label) => {
     const index = values.labels.findIndex((item) => item.text === label.text);
@@ -223,16 +235,21 @@ function CardInfo(props) {
     if (updateCard) updateCard(boardId, values.id, values);
   }, [values, updateCard, boardId]);
 
-  useEffect(() => {
-    if (!assignDropdownOpen) return;
-    const close = () => setAssignDropdownOpen(false);
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [assignDropdownOpen]);
-
   return (
     <Modal onClose={props.onClose}>
-      <div className="p-8 flex flex-col gap-8 min-w-[320px] md:min-w-[550px] max-w-[650px] w-full bg-white dark:bg-slate-900 rounded-xl overflow-y-auto max-h-[90vh]">
+      <div className="min-w-[320px] md:min-w-[550px] max-w-[650px] w-full bg-white dark:bg-slate-900 rounded-xl overflow-y-auto max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Task details</h2>
+          <button
+            type="button"
+            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            onClick={props.onClose}
+            title="Close"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6 pt-4 flex flex-col gap-8 overflow-y-auto">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3 text-gray-900 dark:text-white">
             <CheckSquare size={20} className="text-primary-purple" />
@@ -279,58 +296,62 @@ function CardInfo(props) {
               text={values.title}
               placeholder="Enter Title"
               displayClass="text-2xl font-bold text-gray-800 dark:text-gray-100 px-3 py-2 -ml-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 cursor-text transition-all"
-              editClass="text-2xl font-bold bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-2 outline-none w-full"
+              editClass="text-2xl font-bold bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-2 outline-none w-full flex flex-col gap-3"
               onSubmit={updateTitle}
+              buttonText="Save"
+              cancelButtonText="Cancel"
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-            <Users size={20} className="text-primary-purple" />
-            <p className="font-bold text-lg">Assignees</p>
+          <div className="flex items-center justify-between text-gray-900 dark:text-white">
+            <div className="flex items-center gap-3">
+              <Users size={20} className="text-primary-purple" />
+              <p className="font-bold text-lg">Assignees</p>
+            </div>
+            <button
+              type="button"
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary-purple/10 hover:bg-primary-purple/20 text-primary-purple dark:text-primary-purple-light rounded-lg text-sm font-semibold transition-all"
+              onClick={addAssignee}
+            >
+              <UserPlus size={14} />
+              Add assignee
+            </button>
           </div>
           <div className="ml-8">
-            <div className="relative">
-              <button
-                type="button"
-                className="flex items-center gap-2 px-4 py-2 bg-primary-purple/10 hover:bg-primary-purple/20 text-primary-purple dark:text-primary-purple-light rounded-lg text-sm font-semibold transition-all"
-                onClick={(e) => { e.stopPropagation(); setAssignDropdownOpen(!assignDropdownOpen); }}
-              >
-                <UserPlus size={16} />
-                Assign to user
-              </button>
-              {assignDropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 z-50 py-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
-                  {DEMO_USERS.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      className={`w-full px-4 py-2 text-left text-sm font-medium flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 ${isAssigned(user) ? "text-primary-purple bg-primary-purple/10" : "text-gray-700 dark:text-gray-200"}`}
-                      onClick={(e) => { e.stopPropagation(); toggleAssignee(user); }}
-                    >
-                      <span className="w-5 h-5 rounded-full bg-primary-purple/20 flex items-center justify-center text-xs font-bold text-primary-purple">
-                        {user.name.charAt(0)}
-                      </span>
-                      {user.name}
-                      {isAssigned(user) && <span className="ml-auto text-primary-purple">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {values.assignees?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Assign by role (e.g. Developer, Testing, Reviewer) and person name.</p>
+            {values.assignees?.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 italic py-2">No assignees yet. Click &quot;Add assignee&quot; to add role and person.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Changes save automatically. Use Close (X) above when done.</p>
                 {values.assignees.map((a, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-purple/15 text-primary-purple dark:text-primary-purple-light"
-                  >
-                    {typeof a === "string" ? a : a.name}
-                    <button type="button" className="hover:text-red-500" onClick={() => toggleAssignee(typeof a === "string" ? { id: i, name: a } : a)}>
-                      <X size={12} />
+                  <div key={a.id || i} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <input
+                      type="text"
+                      placeholder="Role (e.g. Developer)"
+                      className="flex-1 min-w-0 px-3 py-2 border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:border-primary-purple outline-none transition-all"
+                      value={a.role || ""}
+                      onChange={(e) => updateAssignee(i, "role", e.target.value)}
+                    />
+                    <span className="text-gray-400 dark:text-gray-500 hidden sm:inline">–</span>
+                    <input
+                      type="text"
+                      placeholder="Person name"
+                      className="flex-1 min-w-0 px-3 py-2 border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:border-primary-purple outline-none transition-all"
+                      value={a.name || ""}
+                      onChange={(e) => updateAssignee(i, "name", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all flex-shrink-0"
+                      onClick={() => removeAssignee(i)}
+                      title="Remove assignee"
+                    >
+                      <Trash size={16} />
                     </button>
-                  </span>
+                  </div>
                 ))}
               </div>
             )}
@@ -348,8 +369,10 @@ function CardInfo(props) {
               text={values.desc || "Add a Description..."}
               placeholder="Enter description"
               displayClass={`text-sm leading-relaxed px-3 py-2 -ml-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 cursor-text transition-all ${values.desc ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 italic'}`}
-              editClass="text-sm bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-3 outline-none w-full min-h-[100px]"
+              editClass="text-sm bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-3 outline-none w-full min-h-[100px] flex flex-col gap-3"
               onSubmit={updateDesc}
+              buttonText="Save"
+              cancelButtonText="Cancel"
             />
             <input
               ref={descFileRef}
@@ -368,17 +391,27 @@ function CardInfo(props) {
               Upload image or file
             </label>
             {values.descMedia?.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-col gap-3">
                 {values.descMedia.map((m, i) => (
                   <div key={i} className="relative group">
                     {m.type === "image" ? (
                       <img src={m.data} alt={m.name} className="h-20 w-20 object-cover rounded-lg border border-gray-200 dark:border-slate-600" />
+                    ) : m.type === "pdf" ? (
+                      <div className="rounded-lg border border-gray-200 dark:border-slate-600 overflow-hidden bg-gray-50 dark:bg-slate-800">
+                        <div className="px-2 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-slate-600 truncate">{m.name}</div>
+                        <embed
+                          src={m.data}
+                          type="application/pdf"
+                          className="w-full h-[280px]"
+                          title={m.name}
+                        />
+                      </div>
                     ) : (
                       <a href={m.data} download={m.name} className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-xs font-medium text-gray-700 dark:text-gray-200 truncate max-w-[120px]">
                         {m.name}
                       </a>
                     )}
-                    <button type="button" className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeDescMedia(i)}>
+                    <button type="button" className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={() => removeDescMedia(i)}>
                       <X size={12} />
                     </button>
                   </div>
@@ -449,10 +482,12 @@ function CardInfo(props) {
                 }
                 placeholder="Label Name"
                 displayClass="inline-block"
-                editClass="bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-2 outline-none text-sm"
+                editClass="bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-2 outline-none text-sm flex flex-col gap-3"
                 onSubmit={(value) =>
                   addLabel({ color: selectedColor, text: value })
                 }
+                buttonText="Add"
+                cancelButtonText="Cancel"
               />
             </div>
           </div>
@@ -544,8 +579,10 @@ function CardInfo(props) {
               }
               placeholder="What needs to be done?"
               displayClass="w-full"
-              editClass="bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-3 outline-none w-full text-sm"
+              editClass="bg-white dark:bg-slate-800 border-2 border-primary-purple/30 rounded-lg p-3 outline-none w-full text-sm flex flex-col gap-3"
               onSubmit={addTask}
+              buttonText="Finish"
+              cancelButtonText="Cancel"
             />
           </div>
         </div>
@@ -567,6 +604,7 @@ function CardInfo(props) {
             </button>
           </div>
         )}
+        </div>
       </div>
     </Modal>
   );
