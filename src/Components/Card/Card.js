@@ -3,6 +3,7 @@ import { CheckSquare, Clock, MoreHorizontal, Check, ArrowRight } from "react-fea
 
 import Dropdown from "../Dropdown/Dropdown";
 import CardInfo from "./CardInfo/CardInfo";
+import { USERS } from "../../config/workflowConfig";
 
 function Card(props) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -149,11 +150,11 @@ function Card(props) {
           )}
           {props.card.assignees?.length > 0 && (
             <div className="flex items-center -space-x-2">
-              {props.card.assignees.slice(0, 3).map((a, i) => {
-                const name = typeof a === "string" ? a : (a.name || "");
-                const role = typeof a === "string" ? "" : (a.role || "");
-                const title = role ? `${role}: ${name}` : name;
-                const initial = (name || role || "?").charAt(0).toUpperCase();
+              {props.card.assignees.slice(0, 3).map((userId, i) => {
+                const user = USERS[userId];
+                if (!user) return null;
+                const title = `${user.name} (${user.role})`;
+                const initial = user.name.charAt(0).toUpperCase();
                 return (
                   <span key={i} className="w-6 h-6 rounded-full bg-primary-purple/20 text-primary-purple flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800" title={title}>
                     {initial}

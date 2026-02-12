@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import Modal from '../Modal/Modal';
-import { ROLES, createTask } from '../../config/workflowConfig';
+import { ROLES, USERS, createTask } from '../../config/workflowConfig';
 
 /**
  * Role icons mapping
@@ -46,11 +46,9 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const priorities = [
-        { value: 'low', label: 'Low', color: 'bg-green-100 text-green-600 border-green-300' },
-        { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
-        { value: 'high', label: 'High', color: 'bg-red-100 text-red-600 border-red-300' }
-    ];
+    const getUsersByRole = (roleId) => {
+        return Object.values(USERS).filter(user => user.role === roleId);
+    };
 
     const validateForm = () => {
         const newErrors = {};
@@ -60,16 +58,16 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
         }
 
         // Check if at least developer, tester, devops, and qa are assigned
-        if (!assignees.developer?.trim()) {
+        if (!assignees.developer) {
             newErrors.developer = 'Developer is required';
         }
-        if (!assignees.tester?.trim()) {
+        if (!assignees.tester) {
             newErrors.tester = 'Tester is required';
         }
-        if (!assignees.devops?.trim()) {
+        if (!assignees.devops) {
             newErrors.devops = 'DevOps is required';
         }
-        if (!assignees.qa?.trim()) {
+        if (!assignees.qa) {
             newErrors.qa = 'QA Reviewer is required';
         }
 
@@ -88,11 +86,11 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
 
         try {
             const task = createTask(title.trim(), currentUserId, {
-                pm: assignees.pm?.trim() || currentUserId,
-                developer: assignees.developer?.trim(),
-                tester: assignees.tester?.trim(),
-                devops: assignees.devops?.trim(),
-                qa: assignees.qa?.trim()
+                pm: assignees.pm || currentUserId,
+                developer: assignees.developer,
+                tester: assignees.tester,
+                devops: assignees.devops,
+                qa: assignees.qa
             });
 
             // Add additional fields
@@ -284,13 +282,18 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
                                                         <span className="text-xs text-red-500">*</span>
                                                     )}
                                                 </div>
-                                                <input
-                                                    type="text"
-                                                    className="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:border-primary-purple focus:outline-none transition-all"
-                                                    placeholder={`Enter ${role.name} name...`}
+                                                <select
+                                                    className="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-200 focus:border-primary-purple focus:outline-none transition-all"
                                                     value={assignees[roleKey] || ''}
                                                     onChange={(e) => updateAssignee(roleKey, e.target.value)}
-                                                />
+                                                >
+                                                    <option value="">Select {role.name}...</option>
+                                                    {getUsersByRole(roleKey).map(user => (
+                                                        <option key={user.id} value={user.id}>
+                                                            {user.avatar} {user.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                                 {errors[roleKey] && (
                                                     <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                                                         <AlertCircle size={10} />

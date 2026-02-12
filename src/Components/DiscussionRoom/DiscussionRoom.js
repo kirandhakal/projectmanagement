@@ -4,7 +4,6 @@ import {
     Image,
     Paperclip,
     X,
-    Smile,
     MoreVertical,
     Reply,
     Trash2,
@@ -19,7 +18,7 @@ import {
     Shield
 } from 'lucide-react';
 
-import { ROLES } from '../../config/workflowConfig';
+import { ROLES, USERS } from '../../config/workflowConfig';
 
 /**
  * Role icons mapping
@@ -199,6 +198,7 @@ function DiscussionRoom({
     const [mediaAttachments, setMediaAttachments] = useState([]);
     const [replyTo, setReplyTo] = useState(null);
     const [isExpanded, setIsExpanded] = useState(true);
+    const [currentUser, setCurrentUser] = useState('user1');
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -237,8 +237,8 @@ function DiscussionRoom({
             id: Date.now() + Math.random(),
             text: newMessage.trim(),
             media: mediaAttachments,
-            role: currentUserRole,
-            senderName: assignees[currentUserRole] || ROLES[currentUserRole.toUpperCase()]?.name || 'User',
+            role: USERS[currentUser].role,
+            senderName: USERS[currentUser].name,
             timestamp: new Date().toISOString(),
             replyTo: replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null
         };
@@ -300,6 +300,23 @@ function DiscussionRoom({
                     </button>
                 </div>
             </div>
+
+            {/* User Selector */}
+            {isExpanded && (
+                <div className="px-4 py-2 bg-gray-100 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
+                    <select
+                        value={currentUser}
+                        onChange={(e) => setCurrentUser(e.target.value)}
+                        className="w-full p-2 text-sm bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded-md"
+                    >
+                        {Object.entries(USERS).map(([id, user]) => (
+                            <option key={id} value={id}>
+                                {user.avatar} {user.name} ({ROLES[user.role.toUpperCase()]?.name})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             {isExpanded && (
                 <>

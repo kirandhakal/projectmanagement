@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 import Modal from '../Modal/Modal';
-import { ROLES, STAGES, getStageById } from '../../config/workflowConfig';
+import { ROLES, getStageById } from '../../config/workflowConfig';
 import DiscussionRoom from '../DiscussionRoom/DiscussionRoom';
 
 /**

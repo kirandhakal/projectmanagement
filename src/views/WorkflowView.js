@@ -7,23 +7,26 @@ import {
     Sun,
     LayoutGrid,
     List,
-    BarChart3,
+    Calendar as CalendarIcon,
+    // BarChart3,
     RefreshCw,
-    ChevronDown,
-    Settings,
-    Users,
-    Briefcase
+    // ChevronDown,
+    // Settings,
+    // Users,
+    // Briefcase
 } from 'lucide-react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 import WorkflowBoard from '../Components/WorkflowBoard/WorkflowBoard';
 import CreateWorkflowTaskModal from '../Components/CreateWorkflowTaskModal/CreateWorkflowTaskModal';
 import WorkflowTaskDetailsModal from '../Components/WorkflowTaskDetailsModal/WorkflowTaskDetailsModal';
-import { ROLES, STAGE_CATEGORIES, transitionTask, getStageById } from '../config/workflowConfig';
+import { ROLES, transitionTask, getStageById } from '../config/workflowConfig';
 
 /**
  * WorkflowView - Main workflow management view
  */
-function WorkflowView() {
+function WorkflowView({ initialViewMode = 'board' }) {
     // State management
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('workflow-tasks');
@@ -35,7 +38,7 @@ function WorkflowView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [filterPriority, setFilterPriority] = useState('all');
-    const [viewMode, setViewMode] = useState('board');
+    const [viewMode, setViewMode] = useState(initialViewMode);
     const [darkMode, setDarkMode] = useState(() => {
         return localStorage.getItem('darkMode') === 'true';
     });
@@ -146,15 +149,16 @@ function WorkflowView() {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-            {/* Header */}
-            <header className="flex-shrink-0 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4">
+      <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+            
+            {/* Header: flex-shrink-0 prevents the header from collapsing */}
+            <header className="flex-shrink-0 z-10 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4 shadow-sm">
                 <div className="flex items-center justify-between">
                     {/* Left side */}
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <div className="p-2 bg-gradient-to-br from-primary-purple to-accent-pink rounded-xl shadow-lg shadow-primary-purple/20">
-                                <LayoutGrid className="text-white" size={24} />
+                                <LayoutGrid className="text-white" size={20} />
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Workflow Board</h1>
@@ -187,7 +191,6 @@ function WorkflowView() {
 
                     {/* Right side */}
                     <div className="flex items-center gap-3">
-                        {/* Search */}
                         <div className="relative hidden md:block">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                             <input
@@ -199,7 +202,6 @@ function WorkflowView() {
                             />
                         </div>
 
-                        {/* Filter Toggle */}
                         <button
                             className={`p-2 rounded-lg transition-all ${showFilters
                                 ? 'bg-primary-purple text-white'
@@ -210,7 +212,6 @@ function WorkflowView() {
                             <Filter size={18} />
                         </button>
 
-                        {/* View Mode Toggle */}
                         <div className="flex items-center bg-gray-100 dark:bg-slate-700 p-1 rounded-lg">
                             <button
                                 className={`p-2 rounded-md transition-all ${viewMode === 'board'
@@ -230,9 +231,17 @@ function WorkflowView() {
                             >
                                 <List size={16} />
                             </button>
+                            <button
+                                className={`p-2 rounded-md transition-all ${viewMode === 'calendar'
+                                    ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-purple'
+                                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                                    }`}
+                                onClick={() => setViewMode('calendar')}
+                            >
+                                <CalendarIcon size={16} />
+                            </button>
                         </div>
 
-                        {/* Dark Mode Toggle */}
                         <button
                             className="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary-purple transition-all"
                             onClick={() => setDarkMode(!darkMode)}
@@ -240,7 +249,6 @@ function WorkflowView() {
                             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
-                        {/* Create Task Button */}
                         <button
                             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-purple to-accent-pink text-white text-sm font-semibold rounded-lg shadow-lg shadow-primary-purple/30 hover:shadow-xl hover:-translate-y-0.5 transition-all"
                             onClick={() => setShowCreateModal(true)}
@@ -254,7 +262,7 @@ function WorkflowView() {
                 {/* Filters Bar */}
                 {showFilters && (
                     <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
-                        {/* Role Filter */}
+                        {/* ... (Role, Priority, and Clear buttons remain the same) */}
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Role:</span>
                             <select
@@ -268,8 +276,6 @@ function WorkflowView() {
                                 ))}
                             </select>
                         </div>
-
-                        {/* Priority Filter */}
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Priority:</span>
                             <select
@@ -283,8 +289,6 @@ function WorkflowView() {
                                 <option value="low">Low</option>
                             </select>
                         </div>
-
-                        {/* Clear Filters */}
                         <button
                             className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-primary-purple transition-colors"
                             onClick={() => {
@@ -300,25 +304,42 @@ function WorkflowView() {
                 )}
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-hidden">
-                <WorkflowBoard
-                    tasks={filteredTasks}
-                    onAdvanceTask={handleAdvanceTask}
-                    onRejectTask={handleRejectTask}
-                    onViewTaskDetails={handleViewTaskDetails}
-                    viewMode={viewMode}
-                />
+            {/* Main Content: flex-1 takes remaining space, overflow-y-auto makes cards scrollable */}
+            <main className="flex-1 overflow-y-auto min-h-0 bg-gray-50 dark:bg-slate-900/50">
+                {viewMode === 'calendar' ? (
+                    <div className="p-6">
+                        <Calendar
+                            onChange={(date) => {
+                                // Handle date selection, perhaps filter tasks by date
+                                console.log('Selected date:', date);
+                            }}
+                            value={new Date()}
+                            className="react-calendar-custom"
+                        />
+                        <div className="mt-4">
+                            <h3 className="text-lg font-semibold mb-2">Tasks for selected date</h3>
+                            {/* Add logic to show tasks on selected date */}
+                            <p className="text-gray-500">Calendar view - tasks will be shown here based on due dates.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <WorkflowBoard
+                        tasks={filteredTasks}
+                        onAdvanceTask={handleAdvanceTask}
+                        onRejectTask={handleRejectTask}
+                        onViewTaskDetails={handleViewTaskDetails}
+                        viewMode={viewMode}
+                    />
+                )}
             </main>
 
-            {/* Modals */}
+         
             {showCreateModal && (
                 <CreateWorkflowTaskModal
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateTask}
                 />
             )}
-
             {selectedTask && (
                 <WorkflowTaskDetailsModal
                     task={selectedTask}
@@ -331,5 +352,6 @@ function WorkflowView() {
         </div>
     );
 }
+    
 
 export default WorkflowView;

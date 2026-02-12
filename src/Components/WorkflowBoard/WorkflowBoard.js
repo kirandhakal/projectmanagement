@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     ChevronRight,
     ChevronLeft,
@@ -7,14 +7,12 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    Users,
-    User,
     MessageSquare,
     GripVertical,
     Move
 } from 'lucide-react';
 
-import { STAGES, WORKFLOW_ORDER, STAGE_CATEGORIES, getStageById, ROLES } from '../../config/workflowConfig';
+import { WORKFLOW_ORDER, STAGE_CATEGORIES, getStageById, ROLES } from '../../config/workflowConfig';
 import Modal from '../Modal/Modal';
 
 /**
