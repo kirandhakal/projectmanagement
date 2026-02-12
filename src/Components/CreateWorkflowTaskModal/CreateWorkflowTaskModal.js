@@ -11,7 +11,8 @@ import {
     Code,
     TestTube,
     Rocket,
-    Shield
+    Shield,
+    Folder
 } from 'lucide-react';
 
 import Modal from '../Modal/Modal';
@@ -31,11 +32,12 @@ const roleIcons = {
 /**
  * CreateWorkflowTaskModal - Modal for PM to create tasks with role assignments
  */
-function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' }) {
+function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user', currentProjectId = null, projects = [] }) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState('medium');
     const [dueDate, setDueDate] = useState('');
+    const [selectedProject, setSelectedProject] = useState(currentProjectId || '');
     const [assignees, setAssignees] = useState({
         pm: '',
         developer: '',
@@ -61,6 +63,11 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
 
         if (!title.trim()) {
             newErrors.title = 'Title is required';
+        }
+
+        // Require project selection if projects exist
+        if (projects.length > 0 && !selectedProject) {
+            newErrors.project = 'Please select a project';
         }
 
         // Check if at least developer, tester, devops, and qa are assigned
@@ -103,6 +110,7 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
             task.description = description.trim();
             task.priority = priority;
             task.date = dueDate;
+            task.projectId = selectedProject || null;
 
             await onCreate(task);
             onClose();
@@ -158,6 +166,40 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
                         <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
                             <AlertCircle className="text-red-500" size={20} />
                             <p className="text-sm text-red-600 dark:text-red-400">{errors.submit}</p>
+                        </div>
+                    )}
+
+                    {/* Project Selection */}
+                    {projects.length > 0 && (
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                <Folder size={16} className="text-primary-purple" />
+                                Project *
+                            </label>
+                            <select
+                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none transition-all ${errors.project
+                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                        : 'border-gray-200 dark:border-slate-700 focus:border-primary-purple'
+                                    }`}
+                                value={selectedProject}
+                                onChange={(e) => {
+                                    setSelectedProject(e.target.value);
+                                    if (errors.project) setErrors(prev => ({ ...prev, project: null }));
+                                }}
+                            >
+                                <option value="">Select a project...</option>
+                                {projects.map(project => (
+                                    <option key={project.id} value={project.id}>
+                                        {project.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.project && (
+                                <p className="text-xs text-red-500 flex items-center gap-1">
+                                    <AlertCircle size={12} />
+                                    {errors.project}
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -318,7 +360,7 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 flex items-center justify-between">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Task will be created in <strong>Backlog</strong> stage
+                        {selectedProject ? 'Task will be created in selected project' : 'Task will be created in Backlog stage'}
                     </p>
                     <div className="flex items-center gap-3">
                         <button

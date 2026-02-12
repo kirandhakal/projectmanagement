@@ -8,18 +8,17 @@ import {
     LayoutGrid,
     List,
     Calendar as CalendarIcon,
-    // BarChart3,
+    Folder,
+    ChevronDown,
     RefreshCw,
-    // ChevronDown,
-    // Settings,
-    // Users,
-    // Briefcase
+    FolderPlus
 } from 'lucide-react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
 import WorkflowBoard from '../Components/WorkflowBoard/WorkflowBoard';
 import CreateWorkflowTaskModal from '../Components/CreateWorkflowTaskModal/CreateWorkflowTaskModal';
+import CreateProjectModal from '../Components/CreateProjectModal/CreateProjectModal';
 import WorkflowTaskDetailsModal from '../Components/WorkflowTaskDetailsModal/WorkflowTaskDetailsModal';
 import { ROLES, transitionTask, getStageById } from '../config/workflowConfig';
 
@@ -28,12 +27,22 @@ import { ROLES, transitionTask, getStageById } from '../config/workflowConfig';
  */
 function WorkflowView({ initialViewMode = 'board' }) {
     // State management
+    const [projects, setProjects] = useState(() => {
+        const saved = localStorage.getItem('workflow-projects');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const [activeProjectId, setActiveProjectId] = useState(() => {
+        return localStorage.getItem('workflow-active-project') || null;
+    });
+
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('workflow-tasks');
         return saved ? JSON.parse(saved) : [];
     });
 
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('all');
@@ -43,6 +52,16 @@ function WorkflowView({ initialViewMode = 'board' }) {
         return localStorage.getItem('darkMode') === 'true';
     });
     const [showFilters, setShowFilters] = useState(false);
+
+    // Persist projects to localStorage
+    useEffect(() => {
+        localStorage.setItem('workflow-projects', JSON.stringify(projects));
+    }, [projects]);
+
+    // Persist active project to localStorage
+    useEffect(() => {
+        localStorage.setItem('workflow-active-project', activeProjectId || '');
+    }, [activeProjectId]);
 
     // Persist tasks to localStorage
     useEffect(() => {
@@ -59,9 +78,20 @@ function WorkflowView({ initialViewMode = 'board' }) {
         localStorage.setItem('darkMode', darkMode);
     }, [darkMode]);
 
+    // Create new project
+    const handleCreateProject = async (project) => {
+        setProjects(prev => [...prev, project]);
+        setActiveProjectId(project.id);
+    };
+
     // Create new task
     const handleCreateTask = async (task) => {
-        setTasks(prev => [...prev, task]);
+        // Add project ID to task
+        const taskWithProject = {
+            ...task,
+            projectId: activeProjectId
+        };
+        setTasks(prev => [...prev, taskWithProject]);
     };
 
     // Advance task to next stage
@@ -115,8 +145,13 @@ function WorkflowView({ initialViewMode = 'board' }) {
         }
     };
 
-    // Filter tasks
+    // Filter tasks by active project
     const filteredTasks = tasks.filter(task => {
+        // Project filter
+        if (activeProjectId && task.projectId !== activeProjectId) {
+            return false;
+        }
+
         // Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -141,11 +176,11 @@ function WorkflowView({ initialViewMode = 'board' }) {
 
     // Statistics
     const stats = {
-        total: tasks.length,
-        completed: tasks.filter(t => t.completed).length,
-        rejected: tasks.filter(t => t.rejected && !t.completed).length,
-        inProgress: tasks.filter(t => !t.completed && !t.rejected && t.currentStage !== 'backlog').length,
-        backlog: tasks.filter(t => t.currentStage === 'backlog').length
+        total: filteredTasks.length,
+        completed: filteredTasks.filter(t => t.completed).length,
+        rejected: filteredTasks.filter(t => t.rejected && !t.completed).length,
+        inProgress: filteredTasks.filter(t => !t.completed && !t.rejected && t.currentStage !== 'backlog').length,
+        backlog: filteredTasks.filter(t => t.currentStage === 'backlog').length
     };
 
     return (
@@ -166,8 +201,23 @@ function WorkflowView({ initialViewMode = 'board' }) {
                             </div>
                         </div>
 
+                        {/* Project Selector */}
+                        <div className="relative">
+                            <select
+                                className="appearance-none px-4 py-2 pr-10 bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:border-primary-purple outline-none cursor-pointer min-w-[180px]"
+                                value={activeProjectId || ''}
+                                onChange={(e) => setActiveProjectId(e.target.value || null)}
+                            >
+                                <option value="">All Projects</option>
+                                {projects.map(project => (
+                                    <option key={project.id} value={project.id}>{project.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+
                         {/* Quick Stats */}
-                        <div className="hidden lg:flex items-center gap-4 ml-8 pl-8 border-l border-gray-200 dark:border-slate-700">
+                        <div className="hidden lg:flex items-center gap-4 pl-8 border-l border-gray-200 dark:border-slate-700">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
                                 <p className="text-[10px] text-gray-500 uppercase font-medium">Total</p>
@@ -251,6 +301,14 @@ function WorkflowView({ initialViewMode = 'board' }) {
 
                         <button
                             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-purple to-accent-pink text-white text-sm font-semibold rounded-lg shadow-lg shadow-primary-purple/30 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                            onClick={() => setShowCreateProjectModal(true)}
+                        >
+                            <FolderPlus size={18} />
+                            <span className="hidden sm:inline">New Project</span>
+                        </button>
+
+                        <button
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-purple to-accent-pink text-white text-sm font-semibold rounded-lg shadow-lg shadow-primary-purple/30 hover:shadow-xl hover:-translate-y-0.5 transition-all"
                             onClick={() => setShowCreateModal(true)}
                         >
                             <Plus size={18} />
@@ -329,15 +387,24 @@ function WorkflowView({ initialViewMode = 'board' }) {
                         onRejectTask={handleRejectTask}
                         onViewTaskDetails={handleViewTaskDetails}
                         viewMode={viewMode}
+                        projects={projects}
                     />
                 )}
             </main>
 
          
+            {showCreateProjectModal && (
+                <CreateProjectModal
+                    onClose={() => setShowCreateProjectModal(false)}
+                    onCreate={handleCreateProject}
+                />
+            )}
             {showCreateModal && (
                 <CreateWorkflowTaskModal
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateTask}
+                    currentProjectId={activeProjectId}
+                    projects={projects}
                 />
             )}
             {selectedTask && (
