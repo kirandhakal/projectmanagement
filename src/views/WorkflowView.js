@@ -8,7 +8,6 @@ import {
     LayoutGrid,
     List,
     Calendar as CalendarIcon,
-    Folder,
     ChevronDown,
     RefreshCw,
     FolderPlus
