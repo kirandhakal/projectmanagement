@@ -14,6 +14,15 @@ export const ROLES = {
     QA: { id: 'qa', name: 'QA Reviewer', color: '#ffa800', icon: '✅' },
 };
 
+// Hardcoded users for demonstration
+export const USERS = {
+    'user1': { id: 'user1', name: 'Alice Johnson', role: 'pm', avatar: '👩' },
+    'user2': { id: 'user2', name: 'Bob Smith', role: 'developer', avatar: '👨' },
+    'user3': { id: 'user3', name: 'Charlie Brown', role: 'tester', avatar: '👦' },
+    'user4': { id: 'user4', name: 'Diana Prince', role: 'devops', avatar: '👸' },
+    'user5': { id: 'user5', name: 'Eve Wilson', role: 'qa', avatar: '👩‍💼' },
+};
+
 // Column/Stage definitions with their properties
 export const STAGES = {
     // Backlog Stage (PM Created)
@@ -400,6 +409,7 @@ export const transitionTask = (task, action, actorId, reason = '') => {
 
 const workflowConfig = {
     ROLES,
+    USERS,
     STAGES,
     WORKFLOW_ORDER,
     STAGE_CATEGORIES,

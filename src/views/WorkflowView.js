@@ -7,6 +7,7 @@ import {
     Sun,
     LayoutGrid,
     List,
+    Calendar as CalendarIcon,
     // BarChart3,
     RefreshCw,
     // ChevronDown,
@@ -14,6 +15,8 @@ import {
     // Users,
     // Briefcase
 } from 'lucide-react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 import WorkflowBoard from '../Components/WorkflowBoard/WorkflowBoard';
 import CreateWorkflowTaskModal from '../Components/CreateWorkflowTaskModal/CreateWorkflowTaskModal';
@@ -228,6 +231,15 @@ function WorkflowView() {
                             >
                                 <List size={16} />
                             </button>
+                            <button
+                                className={`p-2 rounded-md transition-all ${viewMode === 'calendar'
+                                    ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-purple'
+                                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                                    }`}
+                                onClick={() => setViewMode('calendar')}
+                            >
+                                <CalendarIcon size={16} />
+                            </button>
                         </div>
 
                         <button
@@ -294,13 +306,31 @@ function WorkflowView() {
 
             {/* Main Content: flex-1 takes remaining space, overflow-y-auto makes cards scrollable */}
             <main className="flex-1 overflow-y-auto min-h-0 bg-gray-50 dark:bg-slate-900/50">
-                <WorkflowBoard
-                    tasks={filteredTasks}
-                    onAdvanceTask={handleAdvanceTask}
-                    onRejectTask={handleRejectTask}
-                    onViewTaskDetails={handleViewTaskDetails}
-                    viewMode={viewMode}
-                />
+                {viewMode === 'calendar' ? (
+                    <div className="p-6">
+                        <Calendar
+                            onChange={(date) => {
+                                // Handle date selection, perhaps filter tasks by date
+                                console.log('Selected date:', date);
+                            }}
+                            value={new Date()}
+                            className="react-calendar-custom"
+                        />
+                        <div className="mt-4">
+                            <h3 className="text-lg font-semibold mb-2">Tasks for selected date</h3>
+                            {/* Add logic to show tasks on selected date */}
+                            <p className="text-gray-500">Calendar view - tasks will be shown here based on due dates.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <WorkflowBoard
+                        tasks={filteredTasks}
+                        onAdvanceTask={handleAdvanceTask}
+                        onRejectTask={handleRejectTask}
+                        onViewTaskDetails={handleViewTaskDetails}
+                        viewMode={viewMode}
+                    />
+                )}
             </main>
 
          
