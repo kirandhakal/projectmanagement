@@ -46,6 +46,12 @@ function CreateWorkflowTaskModal({ onClose, onCreate, currentUserId = 'pm_user' 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const priorities = [
+        { value: 'low', label: 'Low', color: 'bg-green-100 text-green-600 border-green-300' },
+        { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
+        { value: 'high', label: 'High', color: 'bg-red-100 text-red-600 border-red-300' }
+    ];
+
     const getUsersByRole = (roleId) => {
         return Object.values(USERS).filter(user => user.role === roleId);
     };
