@@ -19,6 +19,7 @@ import {
 import Board from "./Components/Board/Board";
 import Editable from "./Components/Editabled/Editable";
 import WorkflowView from "./views/WorkflowView";
+import TeamView from "./views/TeamView";
 
 // tailwind.css is imported in index.js via index.css
 
@@ -417,11 +418,23 @@ function App() {
                 <span>Workflow Board</span>
                 <span className="text-[10px] px-1.5 py-0.5 bg-gradient-to-r from-primary-purple to-accent-pink text-white rounded-full ml-auto">New</span>
               </div>
-              <div className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-all duration-200 text-sm font-medium mb-1">
+              <div
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium mb-1 ${activeNav === 'calendar'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 text-primary-purple'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                onClick={() => setActiveNav('calendar')}
+              >
                 <Calendar size={18} />
                 <span>Calendar</span>
               </div>
-              <div className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-all duration-200 text-sm font-medium mb-1">
+              <div
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium mb-1 ${activeNav === 'team'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 text-primary-purple'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                onClick={() => setActiveNav('team')}
+              >
                 <Users size={18} />
                 <span>Team</span>
               </div>
@@ -518,6 +531,10 @@ function App() {
       {/* Main Content */}
       {activeNav === 'workflow' ? (
         <WorkflowView />
+      ) : activeNav === 'team' ? (
+        <TeamView />
+      ) : activeNav === 'calendar' ? (
+        <WorkflowView initialViewMode="calendar" />
       ) : (
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <div className="h-16 flex items-center justify-between px-8 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 z-40">

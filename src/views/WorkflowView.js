@@ -26,7 +26,7 @@ import { ROLES, transitionTask, getStageById } from '../config/workflowConfig';
 /**
  * WorkflowView - Main workflow management view
  */
-function WorkflowView() {
+function WorkflowView({ initialViewMode = 'board' }) {
     // State management
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('workflow-tasks');
@@ -38,7 +38,7 @@ function WorkflowView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [filterPriority, setFilterPriority] = useState('all');
-    const [viewMode, setViewMode] = useState('board');
+    const [viewMode, setViewMode] = useState(initialViewMode);
     const [darkMode, setDarkMode] = useState(() => {
         return localStorage.getItem('darkMode') === 'true';
     });
